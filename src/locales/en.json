@@ -47,7 +47,23 @@
         "developedBy": "Developed by",
         "during": "as part of the graduation project at",
         "license": "ERdoc Playground © 2023 is licensed under the MIT license."
-      }
+      },
+      "practice": "Practice"
+    },
+
+    "practice": {
+          "title": "Practice Module",
+          "subtitle": "Choose a level to start",
+          "level": "Level",
+          "levelLabel": "Level {level}",
+          "subLevel": "Sublevel {number}",
+          "placeholder": "Here goes the exercise",
+          "abstractStatement": "Abstract Statement",
+          "directStatement": "Direct Statement",
+          "solve": "Resolve",
+          "validate": "Validate",
+          "correctAnswer": "Correct! Your diagram meets the requirements.",
+          "backToLevels": "Back to levels"
     },
 
     "exportModal": {

@@ -44,8 +44,23 @@
         "developedBy": "Desarrollado por",
         "during": "como trabajo de título en la",
         "license": "ERdoc Playground © 2023 está licenciado bajo la licencia MIT."
-      }
+      },
+      "practice": "Práctica"
     },
+
+    "practice": {
+      "title": "Módulo de práctica",
+      "subtitle": "Elige un nivel y subnivel para comenzar",
+      "level": "Nivel",
+      "levelLabel": "Nivel {level}",
+      "abstractStatement": "Enunciado Abstracto",
+      "directStatement": "Enunciado Directo",
+      "placeholder": "Aquí va el ejercicio",
+      "solve": "Resolver",
+      "validate": "Validar",
+      "correctAnswer": "¡Correcto! Tu diagrama cumple con lo solicitado.",
+      "backToLevels": "Volver a los niveles"
+  },
 
     "exportModal": {
       "title": "Exportar Diagrama",

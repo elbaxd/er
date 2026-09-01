@@ -3,12 +3,14 @@ import dynamic from "next/dynamic";
 import { useMemo, memo } from "react";
 import { BiSolidBook } from "react-icons/bi";
 import { MdDownload } from "react-icons/md";
+import { FaGraduationCap } from "react-icons/fa";
 import AutoLayoutSwitch from "./AutoLayoutSwitch";
 import SaveLoadFileButton from "./SaveLoadFileButton";
 import NewDiagramButton from "./NewDiagramButton";
 import LocaleSwitcher from "./LocaleSwitcher";
 import { ErDocChangeEvent } from "../../types/CodeEditor";
 import AboutButton from "./AboutButton";
+import PracticeButton from "./PracticeButton";
 import { FaUser } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
@@ -95,6 +97,10 @@ export const Header = ({ onErDocChange }: HeaderProps) => {
           <a className="flex items-center" href="/docs" target="_blank">
             <BiSolidBook /> <span className="pl-2">{t("documentation")}</span>
           </a>
+        </HeaderElement>
+
+        <HeaderElement className="border-r-[1px]">
+          <PracticeButton />
         </HeaderElement>
 
         <HeaderElement className="border-r-[1px]">
