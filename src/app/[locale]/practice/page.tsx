@@ -8,7 +8,8 @@ import { ErDocChangeEvent } from "../../types/CodeEditor";
 import { LevelId, SubLevelId, getExercise } from "./exercises";
 
 const LEVELS: LevelId[] = [1, 2, 3, 4, 5, 6];
-const SUB_LEVELS: SubLevelId[] = [1, 2];
+// Orden de aparición de los botones: primero directo, luego abstracto.
+const SUB_LEVELS: SubLevelId[] = [2, 1];
 
 // Subnivel 1 = enunciado abstracto, subnivel 2 = enunciado directo
 const SUB_LEVEL_LABEL_KEYS: Record<SubLevelId, string> = {
