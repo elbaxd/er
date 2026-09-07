@@ -1,20 +1,16 @@
 import { ER } from "../../ERDoc/types/parser/ER";
+import { Relationship } from "../../ERDoc/types/parser/Relationship";
 
 export type LevelId = 1 | 2 | 3 | 4 | 5 | 6;
 export type SubLevelId = 1 | 2;
 
 // --- Forma de la "respuesta esperada" de un ejercicio ---
 //
-// Hay dos modos de validación, porque el enunciado abstracto y el
-// directo piden cosas distintas:
-//
-// - "structural" (enunciado abstracto, subLevel 1): el enunciado no da
-//   nombres explícitos, así que solo se valida la CANTIDAD de entidades,
-//   atributos y keys. El usuario puede nombrar todo como quiera.
-//
-// - "exact" (enunciado directo, subLevel 2): el enunciado da nombres
-//   explícitos ("la entidad Libro", "el atributo ISBN"...), así que se
-//   valida que esos nombres existan tal cual, además de las cantidades.
+// - "structural" (enunciado abstracto): no exige nombres, solo
+//   cantidades (atributos, keys, y para relaciones: cardinalidades y
+//   cantidad de atributos propios).
+// - "exact" (enunciado directo): exige nombres específicos, porque el
+//   enunciado los da explícitamente ("la entidad Usuario", "rut"...).
 
 // ---------- Modo "exact" ----------
 
@@ -25,17 +21,32 @@ export type ExpectedAttributeExact = {
 
 export type ExpectedEntityExact = {
   name: string;
-  attributes: ExpectedAttributeExact[];
+  // Si se omite, no se exige un set específico de atributos (solo que
+  // la entidad exista). Útil para entidades que el enunciado da como
+  // "predefinidas" sin detallar su estructura (ej. Curso, Estudiante).
+  attributes?: ExpectedAttributeExact[];
+  // Si es true, se exige que la entidad esté marcada como débil
+  // (hasDependencies) y que dependa de alguna relación.
+  isWeak?: boolean;
 };
 
 export type ExpectedParticipantExact = {
   entityName: string;
-  cardinality: string; // ej. "1", "N"
+  // Si se omite, no se exige una cardinalidad específica para ese
+  // participante (solo que la entidad participe en la relación).
+  cardinality?: string;
+  participation?: "total" | "partial";
 };
 
 export type ExpectedRelationshipExact = {
-  name: string;
+  // Si se omite, se busca CUALQUIER relación del diagrama que cumpla
+  // con los participantes pedidos (útil cuando el enunciado no exige
+  // un nombre específico, como en la relación de dependencia del
+  // nivel 4).
+  name?: string;
   participants: ExpectedParticipantExact[];
+  // Nombres de atributos propios que la relación debe tener.
+  attributes?: string[];
 };
 
 export type ExpectedAnswerExact = {
@@ -50,11 +61,21 @@ export type ExpectedEntityShape = {
   label: string; // solo para mensajes de feedback, no se compara
   attributeCount: number;
   keyAttributeCount: number;
+  isWeak?: boolean; // default false
+};
+
+export type ExpectedRelationshipShape = {
+  label: string; // solo para mensajes de feedback, no se compara
+  // Multiset de cardinalidades de los participantes, ej. ["1", "N"].
+  cardinalities: string[];
+  // Cantidad de atributos propios que debe tener la relación.
+  attributeCount: number;
 };
 
 export type ExpectedAnswerStructural = {
   mode: "structural";
   entities: ExpectedEntityShape[];
+  relationships?: ExpectedRelationshipShape[];
 };
 
 export type ExpectedAnswer = ExpectedAnswerExact | ExpectedAnswerStructural;
@@ -64,51 +85,56 @@ export type ExerciseDefinition = {
   expected: ExpectedAnswer;
 };
 
-// --- Datos reutilizados entre ejercicios (para no repetir) ---
+// --- Formas reutilizadas (modo structural) ---
 
-// Formas (modo structural)
-const LIBRO_SHAPE: ExpectedEntityShape = {
-  label: "Libro",
-  attributeCount: 3, // ISBN, Titulo, Ano
-  keyAttributeCount: 1, // ISBN
-};
+const shape = (
+  label: string,
+  attributeCount: number,
+  keyAttributeCount: number,
+  isWeak: boolean = false,
+): ExpectedEntityShape => ({ label, attributeCount, keyAttributeCount, isWeak });
 
-const AUTOR_SHAPE: ExpectedEntityShape = {
-  label: "Autor",
-  attributeCount: 3, // RUT, Nombre, Nacionalidad
-  keyAttributeCount: 1, // RUT
-};
+const LIBRO_SHAPE = shape("Libro", 3, 1); // ISBN, Titulo, Ano
+const AUTOR_SHAPE = shape("Autor", 3, 1); // RUT, Nombre, Nacionalidad
+const SOCIO_SHAPE = shape("Socio", 3, 1); // RUT, Nombre, Telefono
+const EJEMPLAR_SHAPE = shape("Ejemplar (entidad débil)", 2, 1, true); // numero_copia (pkey), estado_conservacion
 
-const EDITORIAL_SHAPE: ExpectedEntityShape = {
-  label: "Editorial",
-  attributeCount: 2, // Codigo, Nombre
-  keyAttributeCount: 1, // Codigo
-};
+// --- Entidades exactas reutilizadas (modo exact) ---
 
-// Entidades exactas (modo exact)
-const LIBRO_EXACT: ExpectedEntityExact = {
-  name: "Libro",
+const USUARIO_EXACT: ExpectedEntityExact = {
+  name: "Usuario",
   attributes: [
-    { name: "ISBN", isKey: true },
-    { name: "Titulo", isKey: false },
-    { name: "Anio", isKey: false },
+    { name: "rut", isKey: true },
+    { name: "nombre", isKey: false },
+    { name: "email", isKey: false },
   ],
 };
 
-const AUTOR_EXACT: ExpectedEntityExact = {
-  name: "Autor",
+const PRODUCTO_EXACT: ExpectedEntityExact = {
+  name: "Producto",
   attributes: [
-    { name: "RUT", isKey: true },
-    { name: "Nombre", isKey: false },
-    { name: "Nacionalidad", isKey: false },
+    { name: "codigo", isKey: true },
+    { name: "nombre_producto", isKey: false },
+    { name: "precio", isKey: false },
   ],
 };
 
-const EDITORIAL_EXACT: ExpectedEntityExact = {
-  name: "Editorial",
+// Entidades "predefinidas" por el enunciado, sin atributos exigidos.
+const CURSO_EXACT: ExpectedEntityExact = { name: "Curso" };
+const ESTUDIANTE_EXACT: ExpectedEntityExact = { name: "Estudiante" };
+const CLIENTE_EXACT: ExpectedEntityExact = { name: "Cliente" };
+const FACTURA_EXACT: ExpectedEntityExact = { name: "Factura" };
+const EDIFICIO_EXACT: ExpectedEntityExact = { name: "Edificio" };
+
+const HABITACION_EXACT: ExpectedEntityExact = {
+  name: "Habitacion",
+  isWeak: true,
   attributes: [
-    { name: "Codigo", isKey: true },
-    { name: "Nombre", isKey: false },
+    // Asumimos que un atributo pkey también se marca con isKey=true en
+    // el AST (no encontramos un campo separado para "llave parcial" en
+    // EntityAttribute). Ajustar si el parser real lo representa distinto.
+    { name: "numero_habitacion", isKey: true },
+    { name: "capacidad", isKey: false },
   ],
 };
 
@@ -128,34 +154,117 @@ export const EXERCISES: Partial<
     },
     2: {
       statement:
-        "Crea dos entidades independientes en el editor: Libro y Autor. * La entidad Libro debe incluir los atributos ISBN (marcado como llave primaria utilizando key), Titulo y Anio. * La entidad Autor debe incluir los atributos RUT (marcado como llave primaria utilizando key), Nombre y Nacionalidad.",
+        "Bienvenido a ERdoc! En este nivel aprenderás a definir Entidades (los objetos del mundo real) y sus Atributos (sus propiedades). Para declarar una entidad en ERdoc se utiliza el bloque entity Nombre{ ... }. Cada objeto necesita un atributo identificador único llamado Llave Primaria, la cual se especifica anteponiendo la palabra key. Tu desafío: Crea dos entidades aisladas: Una entidad Usuario que contenga el atributo rut (marcado con key), además de los atributos nombre y email. Una entidad Producto que contenga el atributo codigo (marcado con key), además de los atributos nombre_producto y precio.",
       expected: {
         mode: "exact",
-        entities: [LIBRO_EXACT, AUTOR_EXACT],
+        entities: [USUARIO_EXACT, PRODUCTO_EXACT],
       },
     },
   },
   2: {
     1: {
       statement:
-        "Continuando con la modernización de la biblioteca, ahora se requiere incluir las editoriales que publican los textos. Una editorial posee un código único y un nombre. Tras consultar con el encargado, nos aclara la siguiente regla de negocio: 'Una editorial puede publicar muchos libros a lo largo del tiempo, pero cada libro en nuestro catálogo pertenece y ha sido publicado por una única editorial'. Conecta la entidad Libro (creada anteriormente) con esta nueva estructura.",
+        "Continuando con la digitalización de la biblioteca, ahora se requiere vincular los libros con sus respectivos autores. En el sistema, cada libro pertenece a un único autor registrado. Por otro lado, un autor puede haber escrito uno o varios libros que forman parte de la biblioteca. Modela la relación entre las entidades de forma que reflejen la autoría de cada obra.",
       expected: {
         mode: "structural",
-        entities: [LIBRO_SHAPE, AUTOR_SHAPE, EDITORIAL_SHAPE],
+        entities: [LIBRO_SHAPE, AUTOR_SHAPE],
+        relationships: [
+          {
+            label: "Autoría (Autor–Libro)",
+            cardinalities: ["1", "N"], // Autor:1, Libro:N
+            attributeCount: 0,
+          },
+        ],
       },
     },
     2: {
       statement:
-        "Manteniendo las entidades Libro y Autor del nivel anterior 1. Crea una nueva entidad llamada Editorial con los atributos Codigo (marcado con key) y Nombre. 2. Define una relación llamada Publica entre Editorial y Libro. 3. Establece la cardinalidad de uno a muchos ($1:N$), de modo que Editorial participe con cardinalidad 1 y Libro con cardinalidad N.",
+        "Nuevo concepto: Relaciones y Cardinalidades. Las entidades se conectan entre sí mediante Relaciones usando la sintaxis relation Nombre{Entidad1(cardinalidad), Entidad2(cardinalidad)}. Las cardinalidades definen cuántas instancias se asocian entre sí. En una relación 1:N (Uno a Muchos), un elemento de un lado se relaciona con un único elemento del otro, mientras que este último puede asociarse con varios. Tu desafío: Tienes predefinidas las entidades Curso y Estudiante. Crea una relación llamada Inscribe que conecte a ambas entidades, definiendo la cardinalidad adecuada para indicar que un curso puede tener muchos estudiantes (N), pero cada estudiante pertenece a un único curso (1).",
       expected: {
         mode: "exact",
-        entities: [LIBRO_EXACT, AUTOR_EXACT, EDITORIAL_EXACT],
+        entities: [CURSO_EXACT, ESTUDIANTE_EXACT],
         relationships: [
           {
-            name: "Publica",
+            name: "Inscribe",
             participants: [
-              { entityName: "Editorial", cardinality: "1" },
-              { entityName: "Libro", cardinality: "N" },
+              { entityName: "Curso", cardinality: "1" },
+              { entityName: "Estudiante", cardinality: "N" },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  3: {
+    1: {
+      statement:
+        "Para gestionar el préstamo de libros, la biblioteca registrará a sus socios (identificados por su RUT único, con su nombre y teléfono). Un socio puede solicitar prestados varios libros a lo largo del tiempo, y un mismo libro puede ser pedido por distintos socios. Además, para mantener un control adecuado del servicio, es necesario registrar la fecha exacta en la que se realiza cada préstamo.",
+      expected: {
+        mode: "structural",
+        entities: [LIBRO_SHAPE, SOCIO_SHAPE],
+        relationships: [
+          {
+            label: "Préstamo (Socio–Libro)",
+            cardinalities: ["N", "M"],
+            attributeCount: 1, // fecha del préstamo
+          },
+        ],
+      },
+    },
+    2: {
+      statement:
+        "Nuevo concepto: Relaciones N:M y Atributos Propios. Una relación N:M (Muchos a Muchos) ocurre cuando elementos de ambos lados pueden conectarse con múltiples elementos del otro lado. Las relaciones también pueden guardar atributos propios. Estos se escriben entre llaves dentro del mismo bloque de la relación, igual que en una entidad. Tu desafío: Tienes las entidades Cliente y Factura. Crea una relación llamada Compra de tipo N:M entre ambas. Además, agrega dentro de la relación Compra un atributo propio llamado fecha_compra.",
+      expected: {
+        mode: "exact",
+        entities: [CLIENTE_EXACT, FACTURA_EXACT],
+        relationships: [
+          {
+            name: "Compra",
+            participants: [
+              { entityName: "Cliente", cardinality: "N" },
+              { entityName: "Factura", cardinality: "M" },
+            ],
+            attributes: ["fecha_compra"],
+          },
+        ],
+      },
+    },
+  },
+  4: {
+    1: {
+      statement:
+        "La biblioteca cuenta con varias copias o ejemplares físicos de cada libro. Un ejemplar no posee un identificador único global en la biblioteca; en su lugar, se identifica únicamente dentro del contexto del libro al que pertenece mediante un número de copia (llave parcial) y su estado de conservación. Si un libro se elimina del sistema, sus ejemplares físicos también dejan de existir. Modela la entidad débil de los ejemplares y su relación de dependencia con el libro.",
+      expected: {
+        mode: "structural",
+        entities: [LIBRO_SHAPE, EJEMPLAR_SHAPE],
+        relationships: [
+          {
+            label: "Dependencia (Ejemplar–Libro)",
+            cardinalities: ["1", "N"], // Ejemplar:1 (participación total), Libro:N
+            attributeCount: 0,
+          },
+        ],
+      },
+    },
+    2: {
+      statement:
+        "Nuevo concepto: Entidades Débiles. Una entidad débil es aquella que no puede identificarse por sí misma y depende de una entidad fuerte para existir. Su atributo identificador no es global, sino local, y se define como Llave Parcial usando pkey. La dependencia de existencia se declara mediante la instrucción DEPENDS ON indicando la entidad fuerte de la cual depende. Tu desafío: Tienes la entidad fuerte Edificio. Crea una entidad débil llamada Habitacion que tenga una llave parcial numero_habitacion (usando pkey) y un atributo capacidad. Finalmente, establece la relación de dependencia para que Habitacion dependa de Edificio (DEPENDS ON Edificio).",
+      expected: {
+        mode: "exact",
+        entities: [EDIFICIO_EXACT, HABITACION_EXACT],
+        relationships: [
+          {
+            // Sin nombre: el enunciado no exige un nombre específico
+            // para la relación de dependencia, solo que exista una
+            // que conecte Habitacion (participación total, cardinalidad
+            // 1) con Edificio.
+            participants: [
+              {
+                entityName: "Habitacion",
+                cardinality: "1",
+                participation: "total",
+              },
+              { entityName: "Edificio" },
             ],
           },
         ],
@@ -197,6 +306,58 @@ export const validateAnswer = (
 
 // --- Modo "exact": compara nombres tal como los pide el enunciado ---
 
+const relationshipHasParticipant = (
+  relationship: Relationship,
+  expectedParticipant: ExpectedParticipantExact,
+): boolean => {
+  const actualPart = relationship.participantEntities.find(
+    (p) =>
+      p.entityName.toLowerCase() ===
+      expectedParticipant.entityName.toLowerCase(),
+  );
+
+  if (!actualPart) return false;
+  if (actualPart.isComposite) {
+    // No validamos participantes compuestos en detalle por ahora.
+    return true;
+  }
+  if (
+    expectedParticipant.cardinality !== undefined &&
+    actualPart.cardinality !== expectedParticipant.cardinality
+  ) {
+    return false;
+  }
+  if (
+    expectedParticipant.participation !== undefined &&
+    actualPart.participation !== expectedParticipant.participation
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const relationshipMatches = (
+  relationship: Relationship,
+  expectedRel: ExpectedRelationshipExact,
+): boolean =>
+  expectedRel.participants.every((p) =>
+    relationshipHasParticipant(relationship, p),
+  );
+
+const describeExpectedRelationship = (
+  expectedRel: ExpectedRelationshipExact,
+): string => {
+  const parts = expectedRel.participants
+    .map(
+      (p) =>
+        `${p.entityName}${p.cardinality ? ` (${p.cardinality})` : ""}${
+          p.participation ? ` [${p.participation}]` : ""
+        }`,
+    )
+    .join(", ");
+  return expectedRel.name ? `"${expectedRel.name}" (${parts})` : `(${parts})`;
+};
+
 const validateExact = (
   erDoc: ER,
   expected: ExpectedAnswerExact,
@@ -217,41 +378,52 @@ const validateExact = (
       continue;
     }
 
-    const actualAttrsByName = new Map(
-      actualEntity.attributes.map((attr) => [attr.name.toLowerCase(), attr]),
-    );
-
-    for (const expectedAttr of expectedEntity.attributes) {
-      const actualAttr = actualAttrsByName.get(
-        expectedAttr.name.toLowerCase(),
+    if (expectedEntity.isWeak && !actualEntity.hasDependencies) {
+      missing.push(
+        `La entidad "${expectedEntity.name}" debería ser una entidad débil (usar DEPENDS ON).`,
       );
-
-      if (!actualAttr) {
-        missing.push(
-          `A la entidad "${expectedEntity.name}" le falta el atributo "${expectedAttr.name}".`,
-        );
-        continue;
-      }
-
-      if (expectedAttr.isKey && !actualAttr.isKey) {
-        missing.push(
-          `El atributo "${expectedAttr.name}" de "${expectedEntity.name}" debería estar marcado como llave (key).`,
-        );
-      }
     }
 
-    const expectedAttrNames = new Set(
-      expectedEntity.attributes.map((a) => a.name.toLowerCase()),
-    );
-    const extraAttrs = actualEntity.attributes.filter(
-      (a) => !expectedAttrNames.has(a.name.toLowerCase()),
-    );
-    if (extraAttrs.length > 0) {
-      missing.push(
-        `La entidad "${expectedEntity.name}" tiene atributo(s) que no pide el enunciado: ${extraAttrs
-          .map((a) => a.name)
-          .join(", ")}.`,
+    if (expectedEntity.attributes) {
+      const actualAttrsByName = new Map(
+        actualEntity.attributes.map((attr) => [
+          attr.name.toLowerCase(),
+          attr,
+        ]),
       );
+
+      for (const expectedAttr of expectedEntity.attributes) {
+        const actualAttr = actualAttrsByName.get(
+          expectedAttr.name.toLowerCase(),
+        );
+
+        if (!actualAttr) {
+          missing.push(
+            `A la entidad "${expectedEntity.name}" le falta el atributo "${expectedAttr.name}".`,
+          );
+          continue;
+        }
+
+        if (expectedAttr.isKey && !actualAttr.isKey) {
+          missing.push(
+            `El atributo "${expectedAttr.name}" de "${expectedEntity.name}" debería estar marcado como llave (key/pkey).`,
+          );
+        }
+      }
+
+      const expectedAttrNames = new Set(
+        expectedEntity.attributes.map((a) => a.name.toLowerCase()),
+      );
+      const extraAttrs = actualEntity.attributes.filter(
+        (a) => !expectedAttrNames.has(a.name.toLowerCase()),
+      );
+      if (extraAttrs.length > 0) {
+        missing.push(
+          `La entidad "${expectedEntity.name}" tiene atributo(s) que no pide el enunciado: ${extraAttrs
+            .map((a) => a.name)
+            .join(", ")}.`,
+        );
+      }
     }
   }
 
@@ -269,56 +441,36 @@ const validateExact = (
     );
   }
 
-  if (expected.relationships) {
-    const actualRelByName = new Map(
-      erDoc.relationships.map((rel) => [rel.name.toLowerCase(), rel]),
-    );
+  for (const expectedRel of expected.relationships ?? []) {
+    const candidates = expectedRel.name
+      ? erDoc.relationships.filter(
+          (r) => r.name.toLowerCase() === expectedRel.name!.toLowerCase(),
+        )
+      : erDoc.relationships;
 
-    for (const expectedRel of expected.relationships) {
-      const actualRel = actualRelByName.get(expectedRel.name.toLowerCase());
+    const match = candidates.find((r) => relationshipMatches(r, expectedRel));
 
-      if (!actualRel) {
-        missing.push(`Falta la relación "${expectedRel.name}".`);
-        continue;
-      }
-
-      for (const expectedPart of expectedRel.participants) {
-        const actualPart = actualRel.participantEntities.find(
-          (p) =>
-            p.entityName.toLowerCase() ===
-            expectedPart.entityName.toLowerCase(),
-        );
-
-        if (!actualPart) {
-          missing.push(
-            `La relación "${expectedRel.name}" debería incluir a la entidad "${expectedPart.entityName}".`,
-          );
-          continue;
-        }
-
-        if (
-          !actualPart.isComposite &&
-          actualPart.cardinality !== expectedPart.cardinality
-        ) {
-          missing.push(
-            `La participación de "${expectedPart.entityName}" en "${expectedRel.name}" debería tener cardinalidad "${expectedPart.cardinality}" (tiene "${actualPart.cardinality}").`,
-          );
-        }
-      }
+    if (!match) {
+      missing.push(
+        `Falta una relación ${describeExpectedRelationship(expectedRel)}.`,
+      );
+      continue;
     }
 
-    const expectedRelNames = new Set(
-      expected.relationships.map((r) => r.name.toLowerCase()),
-    );
-    const extraRels = erDoc.relationships.filter(
-      (r) => !expectedRelNames.has(r.name.toLowerCase()),
-    );
-    if (extraRels.length > 0) {
-      missing.push(
-        `Hay relación(es) que no pide el enunciado: ${extraRels
-          .map((r) => r.name)
-          .join(", ")}.`,
+    if (expectedRel.attributes) {
+      const actualAttrNames = new Set(
+        match.attributes.map((a) => a.name.toLowerCase()),
       );
+      const missingAttrs = expectedRel.attributes.filter(
+        (name) => !actualAttrNames.has(name.toLowerCase()),
+      );
+      if (missingAttrs.length > 0) {
+        missing.push(
+          `A la relación "${match.name}" le falta el/los atributo(s): ${missingAttrs.join(
+            ", ",
+          )}.`,
+        );
+      }
     }
   }
 
@@ -327,16 +479,32 @@ const validateExact = (
 
 // --- Modo "structural": solo compara cantidades, sin importar nombres ---
 
-type EntityShape = {
+type EntityShapeKey = {
   attributeCount: number;
   keyAttributeCount: number;
+  isWeak: boolean;
 };
 
-const shapeKey = (shape: EntityShape): string =>
-  `${shape.attributeCount}:${shape.keyAttributeCount}`;
+const entityShapeKey = (shape: EntityShapeKey): string =>
+  `${shape.attributeCount}:${shape.keyAttributeCount}:${shape.isWeak}`;
 
-const describeShape = (shape: EntityShape): string =>
-  `${shape.attributeCount} atributo(s) (${shape.keyAttributeCount} de tipo key)`;
+const describeEntityShape = (shape: EntityShapeKey): string =>
+  `${shape.attributeCount} atributo(s) (${shape.keyAttributeCount} de tipo key)${
+    shape.isWeak ? ", entidad débil" : ""
+  }`;
+
+type RelationshipShapeKey = {
+  cardinalities: string[]; // ya ordenadas
+  attributeCount: number;
+};
+
+const relationshipShapeKey = (shape: RelationshipShapeKey): string =>
+  `${[...shape.cardinalities].sort().join(",")}:${shape.attributeCount}`;
+
+const describeRelationshipShape = (shape: RelationshipShapeKey): string =>
+  `participantes con cardinalidad ${shape.cardinalities.join(":")}, con ${
+    shape.attributeCount
+  } atributo(s) propio(s)`;
 
 const validateStructural = (
   erDoc: ER,
@@ -344,63 +512,113 @@ const validateStructural = (
 ): string[] => {
   const missing: string[] = [];
 
-  const actualShapeCounts = new Map<string, number>();
+  // --- Entidades ---
+  const actualEntityShapeCounts = new Map<string, number>();
   for (const entity of erDoc.entities) {
-    const shape: EntityShape = {
+    const key = entityShapeKey({
       attributeCount: entity.attributes.length,
       keyAttributeCount: entity.attributes.filter((a) => a.isKey).length,
-    };
-    const key = shapeKey(shape);
-    actualShapeCounts.set(key, (actualShapeCounts.get(key) ?? 0) + 1);
+      isWeak: entity.hasDependencies,
+    });
+    actualEntityShapeCounts.set(key, (actualEntityShapeCounts.get(key) ?? 0) + 1);
   }
 
-  const expectedShapeCounts = new Map<
+  const expectedEntityShapeCounts = new Map<
     string,
-    { count: number; shape: EntityShape; labels: string[] }
+    { count: number; shape: EntityShapeKey; labels: string[] }
   >();
   for (const entity of expected.entities) {
-    const shape: EntityShape = {
+    const shapeK: EntityShapeKey = {
       attributeCount: entity.attributeCount,
       keyAttributeCount: entity.keyAttributeCount,
+      isWeak: entity.isWeak ?? false,
     };
-    const key = shapeKey(shape);
-    const current = expectedShapeCounts.get(key);
+    const key = entityShapeKey(shapeK);
+    const current = expectedEntityShapeCounts.get(key);
     if (current) {
       current.count += 1;
       current.labels.push(entity.label);
     } else {
-      expectedShapeCounts.set(key, {
+      expectedEntityShapeCounts.set(key, {
         count: 1,
-        shape,
+        shape: shapeK,
         labels: [entity.label],
       });
     }
   }
 
-  const remainingActualCounts = new Map(actualShapeCounts);
-  for (const [key, { count, shape, labels }] of expectedShapeCounts) {
-    const available = remainingActualCounts.get(key) ?? 0;
-
+  const remainingEntityCounts = new Map(actualEntityShapeCounts);
+  for (const [key, { count, shape: shapeK, labels }] of expectedEntityShapeCounts) {
+    const available = remainingEntityCounts.get(key) ?? 0;
     if (available < count) {
-      const faltantes = count - available;
       missing.push(
-        `Faltan ${faltantes} entidad(es) con la forma de ${labels.join(
+        `Faltan ${count - available} entidad(es) con la forma de ${labels.join(
           "/",
-        )} (${describeShape(shape)}).`,
+        )} (${describeEntityShape(shapeK)}).`,
       );
     }
-
-    remainingActualCounts.set(key, Math.max(0, available - count));
+    remainingEntityCounts.set(key, Math.max(0, available - count));
   }
 
-  const totalExtra = Array.from(remainingActualCounts.values()).reduce(
+  const extraEntityCount = Array.from(remainingEntityCounts.values()).reduce(
     (sum, n) => sum + n,
     0,
   );
-  if (totalExtra > 0) {
+  if (extraEntityCount > 0) {
     missing.push(
-      `Tienes ${totalExtra} entidad(es) de más, o con una cantidad de atributos/keys que no corresponde a lo pedido en el enunciado.`,
+      `Tienes ${extraEntityCount} entidad(es) de más, o con una cantidad de atributos/keys que no corresponde a lo pedido en el enunciado.`,
     );
+  }
+
+  // --- Relaciones ---
+  if (expected.relationships) {
+    const actualRelShapeCounts = new Map<string, number>();
+    for (const relationship of erDoc.relationships) {
+      const cardinalities = relationship.participantEntities.map((p) =>
+        p.isComposite ? "?" : p.cardinality,
+      );
+      const key = relationshipShapeKey({
+        cardinalities,
+        attributeCount: relationship.attributes.length,
+      });
+      actualRelShapeCounts.set(key, (actualRelShapeCounts.get(key) ?? 0) + 1);
+    }
+
+    const expectedRelShapeCounts = new Map<
+      string,
+      { count: number; shape: RelationshipShapeKey; labels: string[] }
+    >();
+    for (const rel of expected.relationships) {
+      const shapeK: RelationshipShapeKey = {
+        cardinalities: rel.cardinalities,
+        attributeCount: rel.attributeCount,
+      };
+      const key = relationshipShapeKey(shapeK);
+      const current = expectedRelShapeCounts.get(key);
+      if (current) {
+        current.count += 1;
+        current.labels.push(rel.label);
+      } else {
+        expectedRelShapeCounts.set(key, {
+          count: 1,
+          shape: shapeK,
+          labels: [rel.label],
+        });
+      }
+    }
+
+    const remainingRelCounts = new Map(actualRelShapeCounts);
+    for (const [key, { count, shape: shapeK, labels }] of expectedRelShapeCounts) {
+      const available = remainingRelCounts.get(key) ?? 0;
+      if (available < count) {
+        missing.push(
+          `Falta una relación de tipo ${labels.join(
+            "/",
+          )}: se esperaban ${describeRelationshipShape(shapeK)}.`,
+        );
+      }
+      remainingRelCounts.set(key, Math.max(0, available - count));
+    }
   }
 
   return missing;

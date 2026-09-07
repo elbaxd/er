@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { ER } from "../../ERDoc/types/parser/ER";
 import useWindowDimensions from "../hooks/useWindowDimensions";
-import { DiagramChange, ErDocChangeEvent } from "../types/CodeEditor";
+import { DiagramChange, ErDocChangeEvent, ErrorMessage } from "../types/CodeEditor";
 import CodeEditor from "./CodeEditor/CodeEditor";
 import { ErDiagram } from "./ErDiagram/ErDiagram";
 
@@ -11,9 +11,23 @@ type BodyProps = {
   erDoc: ER | null;
   onErDocChange: (evt: ErDocChangeEvent) => void;
   lastChange: DiagramChange | null;
+  // Props opcionales para el módulo de práctica: exponer los errores
+  // completos hacia el padre y ocultar los paneles fijos de Errors/
+  // Examples debajo del editor. Si no se pasan, el comportamiento es
+  // idéntico al editor principal.
+  onErrorMessagesChange?: (errors: ErrorMessage[]) => void;
+  hideErrorsPanel?: boolean;
+  hideExamplesPanel?: boolean;
 };
 
-const Body = ({ erDoc, lastChange, onErDocChange }: BodyProps) => {
+const Body = ({
+  erDoc,
+  lastChange,
+  onErDocChange,
+  onErrorMessagesChange,
+  hideErrorsPanel,
+  hideExamplesPanel,
+}: BodyProps) => {
   const [erDocHasError, setErDocHasError] = useState<boolean>(false);
   const [dragging, setDragging] = useState<boolean>(false);
   const { width } = useWindowDimensions();
@@ -30,6 +44,9 @@ const Body = ({ erDoc, lastChange, onErDocChange }: BodyProps) => {
           <CodeEditor
             onErDocChange={onErDocChange}
             onErrorChange={setErDocHasError}
+            onErrorMessagesChange={onErrorMessagesChange}
+            hideErrorsPanel={hideErrorsPanel}
+            hideExamplesPanel={hideExamplesPanel}
           />
         </div>
       </Panel>

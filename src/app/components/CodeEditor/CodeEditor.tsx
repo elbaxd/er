@@ -22,6 +22,17 @@ const DEFAULT_EXAMPLE = "company";
 type ErrorReportingEditorProps = {
   onErDocChange: (evt: ErDocChangeEvent) => void;
   onErrorChange: (hasError: boolean) => void;
+  // Expone la lista completa de errores (no solo un booleano) para que
+  // quien use el editor pueda mostrarlos donde quiera (ej. al validar
+  // una respuesta en el módulo de práctica), en vez de depender del
+  // panel fijo de abajo.
+  onErrorMessagesChange?: (errors: ErrorMessage[]) => void;
+  // Oculta el panel de errores fijo debajo del editor. Por defecto se
+  // muestra, igual que siempre (comportamiento sin cambios para el
+  // editor principal).
+  hideErrorsPanel?: boolean;
+  // Oculta el panel de ejemplos debajo del editor.
+  hideExamplesPanel?: boolean;
 };
 
 const editorThemes: [themeName: string, theme: editor.IStandaloneThemeData][] =
@@ -107,6 +118,9 @@ const LOCAL_STORAGE_EDITOR_CONTENT_KEY = "monaco-editor-content";
 const CodeEditor = ({
   onErDocChange,
   onErrorChange,
+  onErrorMessagesChange,
+  hideErrorsPanel = false,
+  hideExamplesPanel = false,
 }: ErrorReportingEditorProps) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const thisEditor = useMonaco();
@@ -159,6 +173,7 @@ const CodeEditor = ({
       }));
       setEditorErrors(errorMsgs, MarkerSeverity.Error, monacoInstance);
       setErrorMessages(errorMsgs);
+      onErrorMessagesChange?.(errorMsgs);
     } catch (e) {
       onErrorChange(true);
       const syntaxErrorMessage = {
@@ -166,6 +181,7 @@ const CodeEditor = ({
         location: e.location,
       };
       setErrorMessages([syntaxErrorMessage]);
+      onErrorMessagesChange?.([syntaxErrorMessage]);
       setEditorErrors(
         [syntaxErrorMessage],
         MarkerSeverity.Error,
@@ -241,20 +257,24 @@ const CodeEditor = ({
         />
       </Box>
 
-      <Box
-        height={"max-content"}
-        maxHeight={"30%"}
-        backgroundColor={colors.textEditorBackground}
-      >
-        <ErrorTable errors={errorMessages} />
-      </Box>
-      <Box
-        height={"max-content"}
-        maxHeight={"30%"}
-        backgroundColor={colors.textEditorBackground}
-      >
-        <ExamplesTable onErDocChange={onErDocChange} />
-      </Box>
+      {!hideErrorsPanel && (
+        <Box
+          height={"max-content"}
+          maxHeight={"30%"}
+          backgroundColor={colors.textEditorBackground}
+        >
+          <ErrorTable errors={errorMessages} />
+        </Box>
+      )}
+      {!hideExamplesPanel && (
+        <Box
+          height={"max-content"}
+          maxHeight={"30%"}
+          backgroundColor={colors.textEditorBackground}
+        >
+          <ExamplesTable onErDocChange={onErDocChange} />
+        </Box>
+      )}
     </Box>
   );
 };

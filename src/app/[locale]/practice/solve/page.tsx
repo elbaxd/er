@@ -6,7 +6,7 @@ import Body from "../../../components/Body";
 import Header from "../../../components/Header/Header";
 import { Context } from "../../../context";
 import { erDocWithoutLocation } from "../../../util/common";
-import { DiagramChange, ErDocChangeEvent } from "../../../types/CodeEditor";
+import { DiagramChange, ErDocChangeEvent, ErrorMessage } from "../../../types/CodeEditor";
 import { ER } from "../../../../ERDoc/types/parser/ER";
 import {
   LevelId,
@@ -23,7 +23,7 @@ const parseLevelParam = (value: string | null): LevelId => {
 
 const parseSubLevelParam = (value: string | null): SubLevelId => {
   const parsed = Number(value);
-  return parsed === 2 ? 2 : 1;
+  return parsed === 1 ? 1 : 2;
 };
 
 const SolvePage = () => {
@@ -42,6 +42,7 @@ const SolvePage = () => {
   const [erDoc, setErDoc] = useState<ER | null>(null);
   const [lastChange, setLastChange] = useState<DiagramChange | null>(null);
   const [result, setResult] = useState<ValidationResult | null>(null);
+  const [editorErrors, setEditorErrors] = useState<ErrorMessage[]>([]);
 
   // Misma lógica que el editor principal: sincroniza erDoc con lo que
   // el usuario escribe, evitando re-renders si solo cambió la posición.
@@ -79,6 +80,18 @@ const SolvePage = () => {
 
   const handleValidate = () => {
     if (!exercise) return;
+
+    // Si el código tiene errores de sintaxis/semánticos, se muestran esos
+    // en vez de correr la validación estructural/exacta (el diagrama
+    // podría estar incompleto o directamente no haberse parseado).
+    if (editorErrors.length > 0) {
+      setResult({
+        correct: false,
+        missing: editorErrors.map((err) => err.errorMessage),
+      });
+      return;
+    }
+
     setResult(validateAnswer(erDoc, exercise.expected));
   };
 
@@ -146,12 +159,17 @@ const SolvePage = () => {
             )}
           </div>
 
-          {/* Editor de código + diagrama, igual que en el editor principal */}
+          {/* Editor de código + diagrama, igual que en el editor principal,
+              pero sin los paneles fijos de Errors/Examples: los errores se
+              muestran arriba, junto al resultado de "Validar". */}
           <div className="min-h-0 flex-1">
             <Body
               erDoc={erDoc}
               lastChange={lastChange}
               onErDocChange={onErDocChange}
+              onErrorMessagesChange={setEditorErrors}
+              hideErrorsPanel
+              hideExamplesPanel
             />
           </div>
         </div>

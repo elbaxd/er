@@ -5,9 +5,19 @@ import { useRouter } from "next/navigation";
 import Header from "../../components/Header/Header";
 import { Context } from "../../context";
 import { ErDocChangeEvent } from "../../types/CodeEditor";
-import { LevelId, SubLevelId, getExercise } from "./exercises";
+import { LevelId, SubLevelId } from "./exercises";
 
 const LEVELS: LevelId[] = [1, 2, 3, 4, 5, 6];
+
+const LEVEL_NAMES: Record<LevelId, string> = {
+  1: "Entidades",
+  2: "Relaciones",
+  3: "Atributos Propios",
+  4: "Entidades Débiles",
+  5: "...",
+  6: "...",
+};
+
 // Orden de aparición de los botones: primero directo, luego abstracto.
 const SUB_LEVELS: SubLevelId[] = [2, 1];
 
@@ -74,7 +84,7 @@ const PracticePage = () => {
                   <span className="text-xs font-normal uppercase tracking-wide text-slate-500">
                     {t("level")}
                   </span>
-                  {lvl}
+                  {LEVEL_NAMES[lvl]}
                 </button>
               ))}
             </div>
@@ -123,16 +133,10 @@ const ExerciseForLevel = ({
 }) => {
   const t = useTranslations("home.practice");
 
-  const exercise = getExercise(level, subLevel);
-
   return (
-    <div className="text-left text-slate-400">
-      <h2 className="mb-3 text-center text-lg font-semibold text-slate-200">
-        {t("levelLabel", { level })} — {t(SUB_LEVEL_LABEL_KEYS[subLevel])}
+    <div className="text-center text-slate-400">
+      <h2 className="mb-3 text-lg font-semibold text-slate-200">
       </h2>
-      <p className="leading-relaxed">
-        {exercise?.statement ?? t("placeholder")}
-      </p>
       <div className="mt-6 flex justify-center">
         <button
           type="button"
