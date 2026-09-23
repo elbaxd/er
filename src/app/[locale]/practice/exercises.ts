@@ -83,6 +83,9 @@ export type ExpectedAnswer = ExpectedAnswerExact | ExpectedAnswerStructural;
 export type ExerciseDefinition = {
   statement: string;
   expected: ExpectedAnswer;
+  // Esqueleto base con el que arranca el editor al entrar a este
+  // ejercicio (no se persiste en localStorage, ver CodeEditor.tsx).
+  starterCode: string;
 };
 
 // --- Formas reutilizadas (modo structural) ---
@@ -146,38 +149,39 @@ export const EXERCISES: Partial<
   1: {
     1: {
       statement:
-        "Una biblioteca comunitaria necesita digitalizar su inventario. Desean guardar el registro de cada uno de los libros que poseen, distinguiéndolos por su código ISBN único, su título y su año de publicación. Adicionalmente, quieren tener la información de los autores, identificados de forma única por su RUT, registrando también su nombre y nacionalidad. Por ahora, no se requiere modelar la relación entre ambos, solo registrar ambas partes por separado.",
-      expected: {
-        mode: "structural",
-        entities: [LIBRO_SHAPE, AUTOR_SHAPE],
-      },
-    },
-    2: {
-      statement:
         "Bienvenido a ERdoc! En este nivel aprenderás a definir Entidades (los objetos del mundo real) y sus Atributos (sus propiedades). Para declarar una entidad en ERdoc se utiliza el bloque entity Nombre{ ... }. Cada objeto necesita un atributo identificador único llamado Llave Primaria, la cual se especifica anteponiendo la palabra key. Tu desafío: Crea dos entidades aisladas: Una entidad Usuario que contenga el atributo rut (marcado con key), además de los atributos nombre y email. Una entidad Producto que contenga el atributo codigo (marcado con key), además de los atributos nombre_producto y precio.",
       expected: {
         mode: "exact",
         entities: [USUARIO_EXACT, PRODUCTO_EXACT],
       },
+      starterCode: `entity Usuario {
+
+}
+
+entity Producto {
+
+}
+`,
+    },
+    2: {
+      statement:
+        "Una biblioteca comunitaria necesita digitalizar su inventario. Desean guardar el registro de cada uno de los libros que poseen, distinguiéndolos por su código ISBN único, su título y su año de publicación. Adicionalmente, quieren tener la información de los autores, identificados de forma única por su RUT, registrando también su nombre y nacionalidad. Por ahora, no se requiere modelar la relación entre ambos, solo registrar ambas partes por separado.",
+      expected: {
+        mode: "structural",
+        entities: [LIBRO_SHAPE, AUTOR_SHAPE],
+      },
+      starterCode: `entity Libro {
+
+}
+
+entity Autor {
+
+}
+`,
     },
   },
   2: {
     1: {
-      statement:
-        "Continuando con la digitalización de la biblioteca, ahora se requiere vincular los libros con sus respectivos autores. En el sistema, cada libro pertenece a un único autor registrado. Por otro lado, un autor puede haber escrito uno o varios libros que forman parte de la biblioteca. Modela la relación entre las entidades de forma que reflejen la autoría de cada obra.",
-      expected: {
-        mode: "structural",
-        entities: [LIBRO_SHAPE, AUTOR_SHAPE],
-        relationships: [
-          {
-            label: "Autoría (Autor–Libro)",
-            cardinalities: ["1", "N"], // Autor:1, Libro:N
-            attributeCount: 0,
-          },
-        ],
-      },
-    },
-    2: {
       statement:
         "Nuevo concepto: Relaciones y Cardinalidades. Las entidades se conectan entre sí mediante Relaciones usando la sintaxis relation Nombre{Entidad1(cardinalidad), Entidad2(cardinalidad)}. Las cardinalidades definen cuántas instancias se asocian entre sí. En una relación 1:N (Uno a Muchos), un elemento de un lado se relaciona con un único elemento del otro, mientras que este último puede asociarse con varios. Tu desafío: Tienes predefinidas las entidades Curso y Estudiante. Crea una relación llamada Inscribe que conecte a ambas entidades, definiendo la cardinalidad adecuada para indicar que un curso puede tener muchos estudiantes (N), pero cada estudiante pertenece a un único curso (1).",
       expected: {
@@ -193,25 +197,45 @@ export const EXERCISES: Partial<
           },
         ],
       },
+      starterCode: `entity Curso {
+
+}
+
+entity Estudiante {
+
+}
+
+// TODO: agrega la relación Inscribe entre Curso y Estudiante
+`,
+    },
+    2: {
+      statement:
+        "Continuando con la digitalización de la biblioteca, ahora se requiere vincular los libros con sus respectivos autores. En el sistema, cada libro pertenece a un único autor registrado. Por otro lado, un autor puede haber escrito uno o varios libros que forman parte de la biblioteca. Modela la relación entre las entidades de forma que reflejen la autoría de cada obra.",
+      expected: {
+        mode: "structural",
+        entities: [LIBRO_SHAPE, AUTOR_SHAPE],
+        relationships: [
+          {
+            label: "Autoría (Autor–Libro)",
+            cardinalities: ["1", "N"], // Autor:1, Libro:N
+            attributeCount: 0,
+          },
+        ],
+      },
+      starterCode: `entity Libro {
+
+}
+
+entity Autor {
+
+}
+
+// TODO: agrega la relación que modela la autoría entre Autor y Libro
+`,
     },
   },
   3: {
     1: {
-      statement:
-        "Para gestionar el préstamo de libros, la biblioteca registrará a sus socios (identificados por su RUT único, con su nombre y teléfono). Un socio puede solicitar prestados varios libros a lo largo del tiempo, y un mismo libro puede ser pedido por distintos socios. Además, para mantener un control adecuado del servicio, es necesario registrar la fecha exacta en la que se realiza cada préstamo.",
-      expected: {
-        mode: "structural",
-        entities: [LIBRO_SHAPE, SOCIO_SHAPE],
-        relationships: [
-          {
-            label: "Préstamo (Socio–Libro)",
-            cardinalities: ["N", "M"],
-            attributeCount: 1, // fecha del préstamo
-          },
-        ],
-      },
-    },
-    2: {
       statement:
         "Nuevo concepto: Relaciones N:M y Atributos Propios. Una relación N:M (Muchos a Muchos) ocurre cuando elementos de ambos lados pueden conectarse con múltiples elementos del otro lado. Las relaciones también pueden guardar atributos propios. Estos se escriben entre llaves dentro del mismo bloque de la relación, igual que en una entidad. Tu desafío: Tienes las entidades Cliente y Factura. Crea una relación llamada Compra de tipo N:M entre ambas. Además, agrega dentro de la relación Compra un atributo propio llamado fecha_compra.",
       expected: {
@@ -228,25 +252,45 @@ export const EXERCISES: Partial<
           },
         ],
       },
+      starterCode: `entity Cliente {
+
+}
+
+entity Factura {
+
+}
+
+// TODO: agrega la relación Compra (N:M) con su atributo propio fecha_compra
+`,
+    },
+    2: {
+      statement:
+        "Para gestionar el préstamo de libros, la biblioteca registrará a sus socios (identificados por su RUT único, con su nombre y teléfono). Un socio puede solicitar prestados varios libros a lo largo del tiempo, y un mismo libro puede ser pedido por distintos socios. Además, para mantener un control adecuado del servicio, es necesario registrar la fecha exacta en la que se realiza cada préstamo.",
+      expected: {
+        mode: "structural",
+        entities: [LIBRO_SHAPE, SOCIO_SHAPE],
+        relationships: [
+          {
+            label: "Préstamo (Socio–Libro)",
+            cardinalities: ["N", "M"],
+            attributeCount: 1, // fecha del préstamo
+          },
+        ],
+      },
+      starterCode: `entity Libro {
+
+}
+
+entity Socio {
+
+}
+
+// TODO: agrega la relación de préstamo (N:M) con su atributo propio
+`,
     },
   },
   4: {
     1: {
-      statement:
-        "La biblioteca cuenta con varias copias o ejemplares físicos de cada libro. Un ejemplar no posee un identificador único global en la biblioteca; en su lugar, se identifica únicamente dentro del contexto del libro al que pertenece mediante un número de copia (llave parcial) y su estado de conservación. Si un libro se elimina del sistema, sus ejemplares físicos también dejan de existir. Modela la entidad débil de los ejemplares y su relación de dependencia con el libro.",
-      expected: {
-        mode: "structural",
-        entities: [LIBRO_SHAPE, EJEMPLAR_SHAPE],
-        relationships: [
-          {
-            label: "Dependencia (Ejemplar–Libro)",
-            cardinalities: ["1", "N"], // Ejemplar:1 (participación total), Libro:N
-            attributeCount: 0,
-          },
-        ],
-      },
-    },
-    2: {
       statement:
         "Nuevo concepto: Entidades Débiles. Una entidad débil es aquella que no puede identificarse por sí misma y depende de una entidad fuerte para existir. Su atributo identificador no es global, sino local, y se define como Llave Parcial usando pkey. La dependencia de existencia se declara mediante la instrucción DEPENDS ON indicando la entidad fuerte de la cual depende. Tu desafío: Tienes la entidad fuerte Edificio. Crea una entidad débil llamada Habitacion que tenga una llave parcial numero_habitacion (usando pkey) y un atributo capacidad. Finalmente, establece la relación de dependencia para que Habitacion dependa de Edificio (DEPENDS ON Edificio).",
       expected: {
@@ -269,6 +313,43 @@ export const EXERCISES: Partial<
           },
         ],
       },
+      starterCode: `entity Edificio {
+
+}
+
+entity Habitacion {
+
+}
+
+// TODO: agrega la llave parcial (pkey) a Habitacion, márcala como
+// entidad débil (depends on) y crea la relación con Edificio
+`,
+    },
+    2: {
+      statement:
+        "La biblioteca cuenta con varias copias o ejemplares físicos de cada libro. Un ejemplar no posee un identificador único global en la biblioteca; en su lugar, se identifica únicamente dentro del contexto del libro al que pertenece mediante un número de copia (llave parcial) y su estado de conservación. Si un libro se elimina del sistema, sus ejemplares físicos también dejan de existir. Modela la entidad débil de los ejemplares y su relación de dependencia con el libro.",
+      expected: {
+        mode: "structural",
+        entities: [LIBRO_SHAPE, EJEMPLAR_SHAPE],
+        relationships: [
+          {
+            label: "Dependencia (Ejemplar–Libro)",
+            cardinalities: ["1", "N"], // Ejemplar:1 (participación total), Libro:N
+            attributeCount: 0,
+          },
+        ],
+      },
+      starterCode: `entity Libro {
+
+}
+
+entity Ejemplar {
+
+}
+
+// TODO: agrega la llave parcial (pkey) a Ejemplar, márcala como
+// entidad débil (depends on) y crea la relación con Libro
+`,
     },
   },
 };

@@ -33,6 +33,14 @@ type ErrorReportingEditorProps = {
   hideErrorsPanel?: boolean;
   // Oculta el panel de ejemplos debajo del editor.
   hideExamplesPanel?: boolean;
+  // Si se especifica, el editor arranca con este contenido en vez de
+  // leer localStorage o cargar el ejemplo por defecto. Pensado para el
+  // "esqueleto base" de cada ejercicio del módulo de práctica.
+  initialContent?: string;
+  // Si es false, el editor no lee ni escribe en localStorage (evita
+  // pisar el diagrama guardado del editor principal). Por defecto es
+  // true, comportamiento sin cambios.
+  persistToLocalStorage?: boolean;
 };
 
 const editorThemes: [themeName: string, theme: editor.IStandaloneThemeData][] =
@@ -121,6 +129,8 @@ const CodeEditor = ({
   onErrorMessagesChange,
   hideErrorsPanel = false,
   hideExamplesPanel = false,
+  initialContent,
+  persistToLocalStorage = true,
 }: ErrorReportingEditorProps) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const thisEditor = useMonaco();
@@ -163,7 +173,9 @@ const CodeEditor = ({
     monacoInstance = thisEditor,
   ) => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_EDITOR_CONTENT_KEY, content);
+      if (persistToLocalStorage) {
+        localStorage.setItem(LOCAL_STORAGE_EDITOR_CONTENT_KEY, content);
+      }
       const [erDoc, errors] = getERDoc(content);
       onErrorChange(errors.length > 0);
       onErDocChange({ er: erDoc, type: "userInput" });
@@ -192,20 +204,33 @@ const CodeEditor = ({
 
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorRef.current = editor;
-    const prevContent = localStorage.getItem(LOCAL_STORAGE_EDITOR_CONTENT_KEY);
-    if (prevContent === null) {
-      // load an example from api
-      fetchExample(DEFAULT_EXAMPLE)
-        .then((example) => {
-          if (example) {
-            importJSON(example, monacoInstance);
-          }
-        })
-        .catch((err) => console.error(err));
+
+    if (initialContent !== undefined) {
+      // Esqueleto base (ej. de un ejercicio del módulo de práctica):
+      // se usa directamente, sin tocar localStorage ni el ejemplo
+      // por defecto.
+      editor.setValue(initialContent);
+      handleEditorContent(initialContent, monacoInstance);
     } else {
-      editor.setValue(prevContent);
-      handleEditorContent(prevContent, monacoInstance);
+      const prevContent = persistToLocalStorage
+        ? localStorage.getItem(LOCAL_STORAGE_EDITOR_CONTENT_KEY)
+        : null;
+
+      if (prevContent === null) {
+        // load an example from api
+        fetchExample(DEFAULT_EXAMPLE)
+          .then((example) => {
+            if (example) {
+              importJSON(example, monacoInstance);
+            }
+          })
+          .catch((err) => console.error(err));
+      } else {
+        editor.setValue(prevContent);
+        handleEditorContent(prevContent, monacoInstance);
+      }
     }
+
     // mount erdoc language
     monacoInstance.languages.register({ id: "erdoc" });
     monacoInstance.languages.setMonarchTokensProvider("erdoc", erdocTokenizer);

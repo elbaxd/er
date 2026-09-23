@@ -107,12 +107,21 @@ const SolvePage = () => {
           <Header onErDocChange={onErDocChange} />
         </div>
 
-        {/* Contenedor del resto de la pantalla: banner de enunciado + editor/diagrama */}
-        <div className="flex h-[90%] w-full flex-col min-[1340px]:h-[95%]">
-          {/* Banner con el enunciado, botón de volver y botón de validar */}
-          <div className="border-b border-border bg-[#232730] px-6 py-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
+        {/* Editor + diagrama, con el enunciado y el botón Validar
+            insertados arriba del editor (misma columna). */}
+        <div className="h-[90%] w-full min-[1340px]:h-[95%]">
+          <Body
+            key={`${level}-${subLevel}`}
+            erDoc={erDoc}
+            lastChange={lastChange}
+            onErDocChange={onErDocChange}
+            onErrorMessagesChange={setEditorErrors}
+            hideErrorsPanel
+            hideExamplesPanel
+            initialContent={exercise?.starterCode}
+            persistToLocalStorage={false}
+            leftPanelHeader={
+              <div className="border-b border-border bg-[#232730] px-4 py-3">
                 <button
                   type="button"
                   onClick={handleBack}
@@ -123,55 +132,41 @@ const SolvePage = () => {
                 <p className="text-xs uppercase tracking-wide text-slate-500">
                   {t("levelLabel", { level })}
                 </p>
-                <p className="text-sm text-slate-300">
+                <p className="mb-3 text-sm text-slate-300">
                   {exercise?.statement ?? t("placeholder")}
                 </p>
-              </div>
 
-              <button
-                type="button"
-                onClick={handleValidate}
-                className="shrink-0 rounded-md bg-purple-600 px-6 py-2 font-medium text-white transition-colors hover:bg-purple-500"
-              >
-                {t("validate")}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleValidate}
+                  className="w-full rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+                >
+                  {t("validate")}
+                </button>
 
-            {/* Resultado de la validación */}
-            {result && (
-              <div
-                className={`mt-3 rounded-md px-3 py-2 text-sm ${
-                  result.correct
-                    ? "bg-green-500/10 text-green-400"
-                    : "bg-red-500/10 text-red-400"
-                }`}
-              >
-                {result.correct ? (
-                  t("correctAnswer")
-                ) : (
-                  <ul className="list-inside list-disc space-y-1">
-                    {result.missing.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+                {/* Resultado de la validación */}
+                {result && (
+                  <div
+                    className={`mt-3 rounded-md px-3 py-2 text-sm ${
+                      result.correct
+                        ? "bg-green-500/10 text-green-400"
+                        : "bg-red-500/10 text-red-400"
+                    }`}
+                  >
+                    {result.correct ? (
+                      t("correctAnswer")
+                    ) : (
+                      <ul className="list-inside list-disc space-y-1">
+                        {result.missing.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
-
-          {/* Editor de código + diagrama, igual que en el editor principal,
-              pero sin los paneles fijos de Errors/Examples: los errores se
-              muestran arriba, junto al resultado de "Validar". */}
-          <div className="min-h-0 flex-1">
-            <Body
-              erDoc={erDoc}
-              lastChange={lastChange}
-              onErDocChange={onErDocChange}
-              onErrorMessagesChange={setEditorErrors}
-              hideErrorsPanel
-              hideExamplesPanel
-            />
-          </div>
+            }
+          />
         </div>
       </div>
     </Context.Provider>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { ER } from "../../ERDoc/types/parser/ER";
 import useWindowDimensions from "../hooks/useWindowDimensions";
@@ -18,6 +18,14 @@ type BodyProps = {
   onErrorMessagesChange?: (errors: ErrorMessage[]) => void;
   hideErrorsPanel?: boolean;
   hideExamplesPanel?: boolean;
+  // Contenido inicial del editor (esqueleto base) y si debe persistir
+  // en localStorage. Ver CodeEditor.tsx para el detalle.
+  initialContent?: string;
+  persistToLocalStorage?: boolean;
+  // Contenido a insertar ARRIBA del editor, dentro de la misma columna
+  // (ej. el enunciado + botón "Validar" en el módulo de práctica). Si
+  // no se pasa, el panel izquierdo queda igual que siempre.
+  leftPanelHeader?: ReactNode;
 };
 
 const Body = ({
@@ -27,6 +35,9 @@ const Body = ({
   onErrorMessagesChange,
   hideErrorsPanel,
   hideExamplesPanel,
+  initialContent,
+  persistToLocalStorage,
+  leftPanelHeader,
 }: BodyProps) => {
   const [erDocHasError, setErDocHasError] = useState<boolean>(false);
   const [dragging, setDragging] = useState<boolean>(false);
@@ -41,13 +52,18 @@ const Body = ({
             lg ? "overflow-hidden" : ""
           }`}
         >
-          <CodeEditor
-            onErDocChange={onErDocChange}
-            onErrorChange={setErDocHasError}
-            onErrorMessagesChange={onErrorMessagesChange}
-            hideErrorsPanel={hideErrorsPanel}
-            hideExamplesPanel={hideExamplesPanel}
-          />
+          {leftPanelHeader}
+          <div className="min-h-0 flex-1">
+            <CodeEditor
+              onErDocChange={onErDocChange}
+              onErrorChange={setErDocHasError}
+              onErrorMessagesChange={onErrorMessagesChange}
+              hideErrorsPanel={hideErrorsPanel}
+              hideExamplesPanel={hideExamplesPanel}
+              initialContent={initialContent}
+              persistToLocalStorage={persistToLocalStorage}
+            />
+          </div>
         </div>
       </Panel>
 
