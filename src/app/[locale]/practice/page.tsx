@@ -54,20 +54,39 @@ const PracticePage = () => {
   return (
     <div className="flex h-screen w-screen flex-col bg-[#1a1d24]">
       <div className="h-full w-full overflow-y-auto">
-        <div className="mx-auto max-w-5xl px-6 py-10">
+        <div className="px-6 py-10 md:px-12 lg:px-20">
           <h1 className="mb-1 text-2xl font-bold text-slate-100">
             {t("title")}
           </h1>
           <p className="mb-8 text-slate-400">{t("subtitle")}</p>
 
           {/* Camino de niveles: nodos conectados, con un popover
-              flotante bajo el nodo seleccionado. */}
+              flotante bajo el nodo seleccionado. El contenedor ocupa
+              todo el ancho de la página; si los nodos no caben, se
+              recorre con una barra de scroll horizontal en vez de
+              quedar acotado a una columna angosta. */}
           <div className="flex items-start gap-0 overflow-x-auto pb-40 pt-2">
             {PATH_NODES.map((node, idx) => {
               const isSelected =
                 level === node.level && subLevel === node.subLevel;
               const isLast = idx === PATH_NODES.length - 1;
+              const isFirst = idx === 0;
               const groupColor = LEVEL_GROUP_COLOR[node.level];
+
+              // El popover se centra bajo el nodo normalmente, pero en
+              // el primer y el último nodo eso lo saca de la zona
+              // visible (queda cortado a la izquierda/derecha). En
+              // esos casos se alinea hacia adentro en vez de centrarlo.
+              const popoverPositionClass = isFirst
+                ? "left-0"
+                : isLast
+                  ? "right-0"
+                  : "left-1/2 -translate-x-1/2";
+              const arrowPositionClass = isFirst
+                ? "left-8 -translate-x-1/2"
+                : isLast
+                  ? "right-8 translate-x-1/2"
+                  : "left-1/2 -translate-x-1/2";
 
               return (
                 <div key={node.label} className="flex items-center">
@@ -91,10 +110,12 @@ const PracticePage = () => {
                     {/* Popover tipo globo de diálogo, solo en el nodo
                         seleccionado */}
                     {isSelected && (
-                      <div className="absolute left-1/2 top-full z-10 mt-3 w-56 -translate-x-1/2">
+                      <div
+                        className={`absolute top-full z-10 mt-3 w-56 ${popoverPositionClass}`}
+                      >
                         {/* Flecha apuntando al nodo */}
                         <div
-                          className={`absolute -top-3 left-1/2 h-3 w-6 -translate-x-1/2 ${groupColor} [clip-path:polygon(50%_0%,0%_100%,100%_100%)]`}
+                          className={`absolute -top-3 h-3 w-6 ${arrowPositionClass} ${groupColor} [clip-path:polygon(50%_0%,0%_100%,100%_100%)]`}
                         />
                         <div className="overflow-hidden rounded-lg shadow-lg">
                           <div

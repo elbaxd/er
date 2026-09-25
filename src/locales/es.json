@@ -59,7 +59,8 @@
       "solve": "Resolver",
       "validate": "Validar",
       "correctAnswer": "¡Correcto! Tu diagrama cumple con lo solicitado.",
-      "backToLevels": "Volver a los niveles"
+      "backToLevels": "Volver a los niveles",
+      "startLevel": "Comenzar nivel {name}"
   },
 
     "exportModal": {

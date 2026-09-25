@@ -26,14 +26,35 @@ const parseSubLevelParam = (value: string | null): SubLevelId => {
   return parsed === 1 ? 1 : 2;
 };
 
+// Componente contenedor: solo lee los parámetros de la URL. Next.js no
+// vuelve a montar la página al navegar entre niveles (es la misma
+// ruta, solo cambia el query string), así que el "key" de abajo es lo
+// que fuerza a React a destruir y recrear ExerciseSolver -- y con él,
+// todo su estado (erDoc, resultado de validación, etc.) -- cada vez
+// que cambia el nivel o subnivel. Sin esto, el diagrama seguiría
+// mostrando el contenido del nivel anterior hasta que el usuario
+// escribiera algo nuevo.
 const SolvePage = () => {
+  const searchParams = useSearchParams();
+  const level = parseLevelParam(searchParams.get("level"));
+  const subLevel = parseSubLevelParam(searchParams.get("sub"));
+
+  return (
+    <ExerciseSolver key={`${level}-${subLevel}`} level={level} subLevel={subLevel} />
+  );
+};
+
+const ExerciseSolver = ({
+  level,
+  subLevel,
+}: {
+  level: LevelId;
+  subLevel: SubLevelId;
+}) => {
   const t = useTranslations("home.practice");
   const router = useRouter();
   const locale = useLocale();
-  const searchParams = useSearchParams();
 
-  const level = parseLevelParam(searchParams.get("level"));
-  const subLevel = parseSubLevelParam(searchParams.get("sub"));
   const exercise = getExercise(level, subLevel);
 
   const [autoLayoutEnabled, setAutoLayoutEnabled] = useState<boolean | null>(
@@ -111,7 +132,6 @@ const SolvePage = () => {
             insertados arriba del editor (misma columna). */}
         <div className="h-[90%] w-full min-[1340px]:h-[95%]">
           <Body
-            key={`${level}-${subLevel}`}
             erDoc={erDoc}
             lastChange={lastChange}
             onErDocChange={onErDocChange}
@@ -120,6 +140,7 @@ const SolvePage = () => {
             hideExamplesPanel
             initialContent={exercise?.starterCode}
             persistToLocalStorage={false}
+            persistDiagram={false}
             leftPanelHeader={
               <div className="border-b border-border bg-[#232730] px-4 py-3">
                 <button

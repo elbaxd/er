@@ -35,16 +35,24 @@ type ErDiagramProps = {
   setEdgesOrthogonal: (isOrthogonal: boolean) => void;
   onNotationChange: (newNotationType: NotationTypes) => void;
   erEdgeNotation: ErNotation["edgeMarkers"];
+  // Si es false, el diagrama no lee ni escribe en localStorage (ni
+  // posiciones ni el diagrama guardado). Pensado para el módulo de
+  // práctica, para que cada ejercicio arranque en blanco en vez de
+  // heredar el último diagrama guardado del editor principal. Por
+  // defecto es true, comportamiento sin cambios.
+  persistDiagram?: boolean;
 };
 
 const NotationSelectorErDiagramWrapper = ({
   erDoc,
   erDocHasError,
   lastChange,
+  persistDiagram,
 }: {
   erDoc: ER;
   lastChange: DiagramChange | null;
   erDocHasError: boolean;
+  persistDiagram?: boolean;
 }) => {
   const [edgesOrthogonal, setEdgesOrthogonal] = useState<boolean>(false);
   const [notationType, setNotationType] = useState<NotationTypes>("arrow");
@@ -63,6 +71,7 @@ const NotationSelectorErDiagramWrapper = ({
       notationType={notationType}
       onNotationChange={(newNotationType) => setNotationType(newNotationType)}
       setEdgesOrthogonal={setEdgesOrthogonal}
+      persistDiagram={persistDiagram}
     />
   );
 };
@@ -75,6 +84,7 @@ const ErDiagram = ({
   lastChange,
   onNotationChange,
   setEdgesOrthogonal,
+  persistDiagram = true,
 }: ErDiagramProps) => {
   const t = useTranslations("home.erDiagram");
   const erNodeTypes = useMemo(() => notation.nodeTypes, [notation]);
@@ -107,9 +117,11 @@ const ErDiagram = ({
           } else return node;
         });
       });
-      setTimeout(saveToLocalStorage, 100);
+      if (persistDiagram) {
+        setTimeout(saveToLocalStorage, 100);
+      }
     }
-  }, [lastChange, saveToLocalStorage, setNodes, fitView]);
+  }, [lastChange, saveToLocalStorage, setNodes, fitView, persistDiagram]);
 
   if (!erDocHasError && erDoc !== prevErDoc) {
     setPrevErDoc(erDoc);
@@ -176,7 +188,9 @@ const ErDiagram = ({
         )
         .filter((e) => e !== undefined) as Edge[];
     });
-    setTimeout(saveToLocalStorage, 100);
+    if (persistDiagram) {
+      setTimeout(saveToLocalStorage, 100);
+    }
   }
 
   useEffect(() => {
@@ -192,19 +206,27 @@ const ErDiagram = ({
       const viewport = document.querySelector(".react-flow__viewport")!;
       const defs = document.querySelector("#defs")!;
       viewport.append(defs);
-      // on mount, load from local storage
-      loadFromLocalStorage();
+      // on mount, load from local storage (salvo que persistDiagram
+      // sea false: en ese caso el diagrama arranca en blanco y se
+      // construye solo a partir de erDoc, sin heredar nada guardado).
+      if (persistDiagram) {
+        loadFromLocalStorage();
+      }
     },
-    [setRfInstance, loadFromLocalStorage],
+    [setRfInstance, loadFromLocalStorage, persistDiagram],
   );
 
   const onNodeDragStartHandler: NodeDragHandler = (e, node, nodes) => {
-    saveToLocalStorage();
+    if (persistDiagram) {
+      saveToLocalStorage();
+    }
     onNodeDragStart(e, node, nodes);
   };
 
   const onNodeDragStopHandler: NodeDragHandler = (e, node, nodes) => {
-    saveToLocalStorage();
+    if (persistDiagram) {
+      saveToLocalStorage();
+    }
     onNodeDragStop(e, node, nodes);
   };
 

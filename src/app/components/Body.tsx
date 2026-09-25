@@ -22,6 +22,9 @@ type BodyProps = {
   // en localStorage. Ver CodeEditor.tsx para el detalle.
   initialContent?: string;
   persistToLocalStorage?: boolean;
+  // Igual que persistToLocalStorage, pero para el diagrama (posiciones,
+  // nodos guardados por ReactFlow). Ver ErDiagram.tsx para el detalle.
+  persistDiagram?: boolean;
   // Contenido a insertar ARRIBA del editor, dentro de la misma columna
   // (ej. el enunciado + botón "Validar" en el módulo de práctica). Si
   // no se pasa, el panel izquierdo queda igual que siempre.
@@ -37,6 +40,7 @@ const Body = ({
   hideExamplesPanel,
   initialContent,
   persistToLocalStorage,
+  persistDiagram,
   leftPanelHeader,
 }: BodyProps) => {
   const [erDocHasError, setErDocHasError] = useState<boolean>(false);
@@ -82,6 +86,7 @@ const Body = ({
             erDoc={erDoc!}
             erDocHasError={erDocHasError}
             lastChange={lastChange}
+            persistDiagram={persistDiagram}
           />
         </div>
       </Panel>
