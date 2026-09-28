@@ -6,7 +6,11 @@ import Body from "../../../components/Body";
 import Header from "../../../components/Header/Header";
 import { Context } from "../../../context";
 import { erDocWithoutLocation } from "../../../util/common";
-import { DiagramChange, ErDocChangeEvent, ErrorMessage } from "../../../types/CodeEditor";
+import {
+  DiagramChange,
+  ErDocChangeEvent,
+  ErrorMessage,
+} from "../../../types/CodeEditor";
 import { ER } from "../../../../ERDoc/types/parser/ER";
 import {
   LevelId,
@@ -15,6 +19,7 @@ import {
   getExercise,
   validateAnswer,
 } from "../exercises";
+import { markLevelAsCompleted } from "../practiceProgress";
 
 const parseLevelParam = (value: string | null): LevelId => {
   const parsed = Number(value);
@@ -26,21 +31,17 @@ const parseSubLevelParam = (value: string | null): SubLevelId => {
   return parsed === 1 ? 1 : 2;
 };
 
-// Componente contenedor: solo lee los parámetros de la URL. Next.js no
-// vuelve a montar la página al navegar entre niveles (es la misma
-// ruta, solo cambia el query string), así que el "key" de abajo es lo
-// que fuerza a React a destruir y recrear ExerciseSolver -- y con él,
-// todo su estado (erDoc, resultado de validación, etc.) -- cada vez
-// que cambia el nivel o subnivel. Sin esto, el diagrama seguiría
-// mostrando el contenido del nivel anterior hasta que el usuario
-// escribiera algo nuevo.
 const SolvePage = () => {
   const searchParams = useSearchParams();
   const level = parseLevelParam(searchParams.get("level"));
   const subLevel = parseSubLevelParam(searchParams.get("sub"));
 
   return (
-    <ExerciseSolver key={`${level}-${subLevel}`} level={level} subLevel={subLevel} />
+    <ExerciseSolver
+      key={`${level}-${subLevel}`}
+      level={level}
+      subLevel={subLevel}
+    />
   );
 };
 
@@ -65,8 +66,6 @@ const ExerciseSolver = ({
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [editorErrors, setEditorErrors] = useState<ErrorMessage[]>([]);
 
-  // Misma lógica que el editor principal: sincroniza erDoc con lo que
-  // el usuario escribe, evitando re-renders si solo cambió la posición.
   const onErDocChange = (evt: ErDocChangeEvent) => {
     switch (evt.type) {
       case "json": {
@@ -87,8 +86,6 @@ const ExerciseSolver = ({
             JSON.stringify(currentErNoLoc) === JSON.stringify(newErNoLoc);
           return sameSemanticValue ? currentEr : er;
         });
-        // El diagrama cambió: invalida el resultado de la validación
-        // anterior, para no dejar un "¡Correcto!" desactualizado.
         setResult(null);
         return;
       }
@@ -102,9 +99,6 @@ const ExerciseSolver = ({
   const handleValidate = () => {
     if (!exercise) return;
 
-    // Si el código tiene errores de sintaxis/semánticos, se muestran esos
-    // en vez de correr la validación estructural/exacta (el diagrama
-    // podría estar incompleto o directamente no haberse parseado).
     if (editorErrors.length > 0) {
       setResult({
         correct: false,
@@ -113,7 +107,12 @@ const ExerciseSolver = ({
       return;
     }
 
-    setResult(validateAnswer(erDoc, exercise.expected));
+    const validation = validateAnswer(erDoc, exercise.expected);
+    setResult(validation);
+
+    if (validation.correct) {
+      markLevelAsCompleted(level, subLevel);
+    }
   };
 
   const handleBack = () => {
@@ -123,13 +122,12 @@ const ExerciseSolver = ({
   return (
     <Context.Provider value={{ autoLayoutEnabled, setAutoLayoutEnabled }}>
       <div className="flex h-screen w-screen flex-col">
-        {/* Barra superior, idéntica a la del editor principal */}
+        {/* Barra superior */}
         <div className="flex h-[10%] w-full justify-between border-b border-b-border bg-[#232730] min-[1340px]:h-[5%]">
           <Header onErDocChange={onErDocChange} />
         </div>
 
-        {/* Editor + diagrama, con el enunciado y el botón Validar
-            insertados arriba del editor (misma columna). */}
+        {/* Editor + Diagrama */}
         <div className="h-[90%] w-full min-[1340px]:h-[95%]">
           <Body
             erDoc={erDoc}
@@ -142,46 +140,85 @@ const ExerciseSolver = ({
             persistToLocalStorage={false}
             persistDiagram={false}
             leftPanelHeader={
-              <div className="border-b border-border bg-[#232730] px-4 py-3">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="mb-1 text-xs text-slate-500 hover:text-slate-300"
-                >
-                  ← {t("backToLevels")}
-                </button>
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  {t("levelLabel", { level })}
-                </p>
-                <p className="mb-3 text-sm text-slate-300">
-                  {exercise?.statement ?? t("placeholder")}
-                </p>
+              <div className="border-b border-border bg-[#232730] px-4 py-3.5 space-y-3">
+                {/* Botón superior discreto */}
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="inline-flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-slate-100"
+                  >
+                    <span>←</span>
+                    <span>{t("backToLevels")}</span>
+                  </button>
+                  <span className="rounded bg-slate-800 px-2 py-0.5 text-[11px] font-semibold tracking-wider text-purple-300 border border-purple-500/20">
+                    NIVEL {level}.{subLevel}
+                  </span>
+                </div>
 
+                {/* Enunciado con mayor tamaño y contraste */}
+                <div className="rounded-lg border border-slate-700/70 bg-[#171a21]/90 p-3.5 shadow-inner">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-purple-400">
+                    {t("levelLabel", { level })}
+                  </p>
+                  <p className="text-[15px] leading-relaxed text-slate-100 selection:bg-purple-500/30">
+                    {exercise?.statement ?? t("placeholder")}
+                  </p>
+                </div>
+
+                {/* Botón de validación */}
                 <button
                   type="button"
                   onClick={handleValidate}
-                  className="w-full rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+                  className="w-full rounded-md bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-purple-500 active:scale-[0.99]"
                 >
                   {t("validate")}
                 </button>
 
-                {/* Resultado de la validación */}
+                {/* Panel de resultado de validación */}
                 {result && (
                   <div
-                    className={`mt-3 rounded-md px-3 py-2 text-sm ${
+                    className={`rounded-lg p-3.5 transition-all ${
                       result.correct
-                        ? "bg-green-500/10 text-green-400"
-                        : "bg-red-500/10 text-red-400"
+                        ? "border border-emerald-500/40 bg-emerald-950/40 text-emerald-200"
+                        : "border border-red-500/40 bg-red-950/40 text-red-200"
                     }`}
                   >
                     {result.correct ? (
-                      t("correctAnswer")
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-2">
+                          <span className="text-lg">🎉</span>
+                          <div>
+                            <p className="font-semibold text-emerald-300 text-sm">
+                              {t("correctAnswer")}
+                            </p>
+                            <p className="text-xs text-emerald-400/90 mt-0.5">
+                              ¡Progreso guardado y nivel completado con éxito!
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Botón directo y notorio para volver al selector de niveles */}
+                        <button
+                          type="button"
+                          onClick={handleBack}
+                          className="flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3.5 py-2.5 text-sm font-bold text-white shadow transition-all hover:bg-emerald-500 active:scale-[0.98]"
+                        >
+                          <span>Volver al selector de niveles</span>
+                          <span>→</span>
+                        </button>
+                      </div>
                     ) : (
-                      <ul className="list-inside list-disc space-y-1">
-                        {result.missing.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
+                      <div>
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-red-400">
+                          Revisa los siguientes detalles:
+                        </p>
+                        <ul className="list-inside list-disc space-y-1 text-xs">
+                          {result.missing.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
                 )}
