@@ -23,7 +23,7 @@ import { markLevelAsCompleted } from "../practiceProgress";
 
 const parseLevelParam = (value: string | null): LevelId => {
   const parsed = Number(value);
-  return parsed >= 1 && parsed <= 6 ? (parsed as LevelId) : 1;
+  return parsed >= 1 && parsed <= 10 ? (parsed as LevelId) : 1;
 };
 
 const parseSubLevelParam = (value: string | null): SubLevelId => {
