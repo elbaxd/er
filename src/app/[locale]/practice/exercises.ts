@@ -161,7 +161,7 @@ export const EXERCISES: Partial<
   1: {
     1: {
       statement:
-        "Bienvenido a ERdoc! En este nivel aprenderás a definir Entidades y sus Atributos. Para declarar una entidad se utiliza el bloque entity Nombre { ... }. Cada entidad requiere una Llave Primaria que la identifique unívocamente, indicada anteponiendo la palabra key.\n\nTu desafío: Crea dos entidades aisladas:\n1. Una entidad Usuario con el atributo rut (marcado con key), además de nombre y email.\n2. Una entidad Producto con el atributo codigo (marcado con key), además de nombre_producto y precio.",
+        "Bienvenido a ERdoc! En este nivel aprenderás a definir Entidades y sus Atributos. Para declarar una entidad se utiliza el bloque entity Nombre { ... }. Cada entidad requiere una Llave Primaria que la identifique unívocamente, indicada a través de la palabra key luego del atributo que corresponde a la llave.\n\nTu desafío: Crea dos entidades aisladas:\n1. Una entidad Usuario con el atributo rut (marcado con key), además de nombre y email.\n2. Una entidad Producto con el atributo codigo (marcado con key), además de nombre_producto y precio.",
       expected: {
         mode: "exact",
         entities: [USUARIO_EXACT, PRODUCTO_EXACT],
@@ -199,7 +199,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Curso {\n  codigo key\n  nombre\n}\n\nentity Estudiante {\n  rut key\n  nombre\n}\n\n// TODO: Crea la relación Inscribe (1:N) entre Curso y Estudiante\n`,
+      starterCode: `entity Curso {\n  codigo key\n  nombre\n}\n\nentity Estudiante {\n  rut key\n  nombre\n}\n`,
     },
     2: {
       statement:
@@ -215,7 +215,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Editorial {\n\n}\n\n// TODO: Modela la relación 1:N entre Editorial y Libro\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Editorial {\n\n}\n`,
     },
   },
 
@@ -239,7 +239,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Departamento {\n  id_dept key\n  nombre\n}\n\nentity Empleado {\n  rut key\n  nombre\n}\n\n// TODO: Crea la relación Pertenece_A con participación total (!) para Empleado\n`,
+      starterCode: `entity Departamento {\n  id_dept key\n  nombre\n}\n\nentity Empleado {\n  rut key\n  nombre\n}\n`,
     },
     2: {
       statement:
@@ -256,7 +256,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Editorial {\n  codigo key\n  nombre\n}\n\n// TODO: Modela la relación 1:N exigiendo participación total (!) en Libro\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Editorial {\n  codigo key\n  nombre\n}\n`,
     },
   },
 
@@ -280,7 +280,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Estudiante {\n  rut key\n  nombre\n}\n\nentity Curso {\n  codigo key\n  nombre\n}\n\n// TODO: Crea la relación Inscribe con cardinalidad N:M\n`,
+      starterCode: `entity Estudiante {\n  rut key\n  nombre\n}\n\nentity Curso {\n  codigo key\n  nombre\n}\n`,
     },
     2: {
       statement:
@@ -296,7 +296,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Autor {\n  rut key\n  nombre\n  nacionalidad\n}\n\n// TODO: Modela la relación N:M de autoría\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Autor {\n  rut key\n  nombre\n  nacionalidad\n}\n`,
     },
   },
 
@@ -321,7 +321,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Estudiante {\n  rut key\n  nombre\n}\n\nentity Curso {\n  codigo key\n  nombre\n}\n\n// TODO: Crea la relación Inscribe (N:M) con atributos propios fecha_inscripcion y nota_final\n`,
+      starterCode: `entity Estudiante {\n  rut key\n  nombre\n}\n\nentity Curso {\n  codigo key\n  nombre\n}\n`,
     },
     2: {
       statement:
@@ -337,7 +337,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Socio {\n  rut key\n  nombre\n  telefono\n}\n\n// TODO: Modela la relación N:M de préstamo incorporando 2 atributos propios\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Socio {\n  rut key\n  nombre\n  telefono\n}\n`,
     },
   },
 
@@ -360,7 +360,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Edificio {\n  codigo key\n  nombre\n}\n\n// TODO: Declara Sala con llave parcial (pkey), capacidad, DEPENDS ON Edificio y su relación\n`,
+      starterCode: `entity Edificio {\n  codigo key\n  nombre\n}\n`,
     },
     2: {
       statement:
@@ -377,7 +377,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\n// TODO: Modela la entidad débil Ejemplar y su relación de dependencia con Libro\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n`,
     },
   },
 
@@ -411,7 +411,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Empleado {\n  rut key\n  nombre\n  salario\n}\n\n// TODO: Declara las entidades Medico y Enfermero extendiendo de Empleado\n`,
+      starterCode: `entity Empleado {\n  rut key\n  nombre\n  salario\n}\n`,
     },
     2: {
       statement:
@@ -420,7 +420,7 @@ export const EXERCISES: Partial<
         mode: "structural",
         entities: [LIBRO_SHAPE, LIBRO_DIGITAL_SHAPE, LIBRO_IMPRESO_SHAPE],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\n// TODO: Modela dos subclases que hereden de Libro con sus atributos propios\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n`,
     },
   },
 
@@ -458,7 +458,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Persona {\n  rut key\n  nombre\n}\n\n// TODO: Crea Miembro_Academico EXTENDS Persona, y luego Profesor y Alumno EXTENDS Miembro_Academico\n`,
+      starterCode: `entity Persona {\n  rut key\n  nombre\n}\n`,
     },
     2: {
       statement:
@@ -472,7 +472,7 @@ export const EXERCISES: Partial<
           AUDIOLIBRO_SHAPE,
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity LibroDigital extends Libro {\n  formato\n  tamano_mb\n}\n\n// TODO: Modela dos subclases que hereden de LibroDigital\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity LibroDigital extends Libro {\n  formato\n  tamano_mb\n}\n`,
     },
   },
 
@@ -513,7 +513,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `entity Empleado {\n  rut key\n  nombre\n}\n\nentity Proyecto {\n  id_proyecto key\n  nombre_proyecto\n}\n\nentity Evaluador {\n  id_evaluador key\n  nombre\n}\n\nrelation Trabaja_En(Empleado N, Proyecto M)\n\n// TODO: Declara la agregación Asignacion sobre Trabaja_En y la relación Evalua con Evaluador\n`,
+      starterCode: `entity Empleado {\n  rut key\n  nombre\n}\n\nentity Proyecto {\n  id_proyecto key\n  nombre_proyecto\n}\n\nentity Evaluador {\n  id_evaluador key\n  nombre\n}\n\nrelation Trabaja_En(Empleado N, Proyecto M)\n`,
     },
     2: {
       statement:
@@ -541,7 +541,7 @@ export const EXERCISES: Partial<
           { label: "Agregación de Suministro" },
         ],
       },
-      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Proveedor {\n  rut key\n  nombre_empresa\n}\n\nentity Inspector {\n  id_inspector key\n  nombre\n}\n\n// TODO: Modela la relación N:M entre Libro y Proveedor, la agregación sobre ella, y la relación con Inspector\n`,
+      starterCode: `entity Libro {\n  isbn key\n  titulo\n  ano\n}\n\nentity Proveedor {\n  rut key\n  nombre_empresa\n}\n\nentity Inspector {\n  id_inspector key\n  nombre\n}\n`,
     },
   },
 
@@ -617,7 +617,7 @@ export const EXERCISES: Partial<
           },
         ],
       },
-      starterCode: `// Integra: Entidad débil, Herencia (EXTENDS) y Agregación\n`,
+      starterCode: ``,
     },
     2: {
       statement:
@@ -654,7 +654,7 @@ export const EXERCISES: Partial<
           { label: "Agregación de Ubicación" },
         ],
       },
-      starterCode: `// Modela el esquema conceptual completo de la biblioteca\n`,
+      starterCode: ``,
     },
   },
 };
@@ -768,7 +768,6 @@ const validateExact = (
       );
     }
 
-    // Validación de Herencia (EXTENDS)
     if (expectedEntity.extendsName) {
       const parentName =
         (actualEntity as unknown as { parentEntity?: string }).parentEntity ||
@@ -828,7 +827,6 @@ const validateExact = (
     }
   }
 
-  // Validación de Relaciones
   for (const expectedRel of expected.relationships ?? []) {
     const candidates = expectedRel.name
       ? erDoc.relationships.filter(
@@ -862,7 +860,6 @@ const validateExact = (
     }
   }
 
-  // Validación de Agregaciones
   for (const expectedAgg of expected.aggregations ?? []) {
     const aggregationsList = (erDoc as unknown as { aggregations?: Array<{ name: string; aggregatedRelationshipName?: string; relationshipName?: string }> }).aggregations ?? [];
     const match = aggregationsList.find(
@@ -919,7 +916,6 @@ const validateStructural = (
 ): string[] => {
   const missing: string[] = [];
 
-  // 1. Conteo estructural de entidades
   const actualEntityShapeCounts = new Map<string, number>();
   for (const entity of erDoc.entities) {
     const hasParent = Boolean(
@@ -974,7 +970,6 @@ const validateStructural = (
     remainingEntityCounts.set(key, Math.max(0, available - count));
   }
 
-  // 2. Conteo estructural de relaciones
   if (expected.relationships) {
     const actualRelShapeCounts = new Map<string, number>();
     for (const relationship of erDoc.relationships) {
@@ -1031,7 +1026,6 @@ const validateStructural = (
     }
   }
 
-  // 3. Conteo estructural de agregaciones
   if (expected.aggregations) {
     const aggregationsList =
       (erDoc as unknown as { aggregations?: unknown[] }).aggregations ?? [];
